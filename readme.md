@@ -8,3 +8,5 @@ spark-submit --packages com.audienceproject:spark-dynamodb_2.12:1.1.2 --master l
 O resultado do arquivo é carregado no DynamoDB
 
 ![Resultado](table.png "Resultado")
+
+![Resultado](item.png "Resultado")

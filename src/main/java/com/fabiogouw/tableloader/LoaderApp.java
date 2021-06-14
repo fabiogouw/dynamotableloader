@@ -4,6 +4,8 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.util.Arrays;
+
 import static org.apache.spark.sql.functions.*;
 
 public class LoaderApp {
@@ -16,7 +18,11 @@ public class LoaderApp {
         spark
                 .sqlContext()
                 .udf()
-                .register( "createJson", createJson(), DataTypes.StringType );
+                .register( "createJson", createJson(), DataTypes.createStructType(
+                        Arrays.asList(
+                                DataTypes.createStructField("amount", DataTypes.FloatType, false),
+                                DataTypes.createStructField("date", DataTypes.StringType, false)
+                        )));
 
         Dataset<Row> df = spark
                 .read()
@@ -28,7 +34,7 @@ public class LoaderApp {
                 functions.callUDF( "createJson", df.col( "amount" ),
                         df.col( "date" )) );
         df = df.drop("amount").drop("date");
-
+        df.printSchema();
         df.write()
                 .format("dynamodb")
                 .mode(SaveMode.Append)
@@ -39,10 +45,10 @@ public class LoaderApp {
         spark.stop();
     }
 
-    public static UDF2<String, String, String> createJson()
+    public static UDF2<String, String, Row> createJson()
     {
         return ( s1, s2 ) -> {
-            return "{'amount': " + s1 + ", 'date': '" + s2 + "'}";
+            return RowFactory.create(Float.parseFloat(s1), s2);
         };
     }
 }
